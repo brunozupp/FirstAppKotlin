@@ -1,6 +1,7 @@
 package com.novelitech.firstappkotlin
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RadioGroup
@@ -15,6 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.novelitech.firstappkotlin.ui.theme.FirstAppKotlinTheme
+import org.json.JSONObject
+import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 
 class MainActivity : ComponentActivity() {
 
@@ -52,6 +56,33 @@ class MainActivity : ComponentActivity() {
             return
         } else {
 
+            Thread {
+                val url = URL("https://free.currconv.com/api/v7/convert?q=${currency}_BRL&compact=ultra&apiKey=[YOUR_API_KEY]")
+
+                val conn = url.openConnection() as HttpsURLConnection
+
+                try {
+
+                    // String in JSON Format
+                    val data = conn.inputStream.bufferedReader().readText()
+
+                    val obj = JSONObject(data)
+
+                    // I need to use this to render the elements because this Thread is out from the main Render.
+                    runOnUiThread {
+                        val res = obj.getDouble("${currency}_BRL")
+
+                        val resultConvertion = value.toDouble() * res
+
+                        result.text = "R$ ${"%.4f".format(resultConvertion)}"
+                        result.visibility = View.VISIBLE
+                    }
+
+                } finally {
+                    conn.disconnect()
+                }
+
+            }.start()
         }
     }
 }
